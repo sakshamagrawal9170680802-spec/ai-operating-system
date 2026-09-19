@@ -4,6 +4,22 @@ from nodes.chatbot_node import chatbot
 from langchain.messages import HumanMessage,AIMessage,SystemMessage,ToolMessage
 from langgraph.prebuilt import ToolNode,tools_condition
 from nodes.chatbot_node import tools
+from dotenv import load_dotenv
+import os
+from langgraph.checkpoint.postgres import PostgresSaver
+from psycopg import connect
+from psycopg.rows import dict_row
+
+load_dotenv()
+
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise ValueError(
+        "DATABASE_URL is not set in the .env file."
+    )
+
 
 #graph creation
 Aegis_graph=StateGraph(Aegis_State)
@@ -19,7 +35,12 @@ Aegis_graph.add_edge("chatbot",END)
 Aegis_graph.add_conditional_edges("chatbot",tools_condition,{"tools":"Aegis_tools",END:END})
 Aegis_graph.add_edge("Aegis_tools","chatbot")
 
-Aegis_workflow=Aegis_graph.compile()
-initial_state={"messages":[HumanMessage("Find the process using the most memory and give me its details.")]}
-final_state=Aegis_workflow.invoke(initial_state)
-print(final_state["messages"])
+
+#creating checkpointer to save messages and add persistence
+connection=connect(DATABASE_URL,autocommit=True,row_factory=dict_row)
+checkpointer=PostgresSaver(connection)
+checkpointer.setup()
+
+
+#compile graph
+agent=Aegis_graph.compile(checkpointer=checkpointer)
