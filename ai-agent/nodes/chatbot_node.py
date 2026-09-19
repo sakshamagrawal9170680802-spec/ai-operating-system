@@ -1,30 +1,17 @@
 from langchain_ollama import ChatOllama
-from dotenv import load_dotenv
-import os
 from state import Aegis_State
 from langchain.messages import SystemMessage
 from System_Prompt import Aegis_System_Prompt
-from tools.list_processes_tool import list_processes
-from tools.get_system_memory_tool import get_system_memory
-from tools.get_PID_process_details_tool import get_process_details
+from tools.operating_system_tools import list_processes,get_system_memory,get_process_details,lock_computer,kill_process,find_process
+from tools.brightness_tools import set_display_brightness,get_display_brightness,list_all_monitors
+from tools.audio_tools import list_audio_output_devices,get_default_audio_device,get_volume,set_volume,get_mute_status,mute,unmute
+from tools.dev_management_tools import open_application,arrange_windows,setup_dev_environment,get_open_windows,arrange_open_windows
+from tools.file_management_tools import find_file_by_name
+from tools.semantic_search.semantic_search_with_query import semantic_file_search
 
+llm = ChatOllama(model="qwen3:4b",temperature=0)
 
-load_dotenv()
-
-api_key=os.getenv("OLLAMA_API_KEY")
-
-
-llm=ChatOllama(model="gpt-oss:120b",
-               base_url="https://ollama.com",
-               temperature=0,
-               client_kwargs={
-                    "headers": {
-                        "Authorization": f"Bearer {api_key}"
-                    }
-                }
-    )
-
-tools=[list_processes,get_system_memory,get_process_details]
+tools=[list_processes,get_system_memory,get_process_details,set_display_brightness,get_display_brightness,list_all_monitors,list_audio_output_devices,get_default_audio_device,get_volume,set_volume,get_mute_status,mute,unmute,lock_computer,kill_process,find_process,open_application,arrange_windows,find_file_by_name,semantic_file_search,arrange_open_windows,get_open_windows,setup_dev_environment]
 
 llm=llm.bind_tools(tools)
 
